@@ -1,0 +1,70 @@
+if [[ -z "$TMUX" && -z "$VSCODE" ]]
+then
+    tmux attach -t default || tmux new -s default
+fi
+
+zmodload zsh/zprof
+
+export ZSH="/home/brunolca/.oh-my-zsh"
+
+ZSH_THEME="brunolca"
+TERM="screen-256color"
+EDITOR="nvim"
+TMPDIR="/tmp/"
+NPM_PACKAGES="${HOME}/.npm-packages"
+PATH="${HOME}/.local/bin:$NPM_PACKAGES/bin:$PATH"
+
+plugins=(
+  common-aliases
+  git
+  docker-compose
+  tmux
+  docker
+  zsh-completions
+  systemd
+)
+
+source $ZSH/oh-my-zsh.sh
+
+export FZF_DEFAULT_COMMAND='rg --files --no-ignore --hidden --follow --glob "!.git/*"'
+
+# Unset manpath so we can inherit from /etc/manpath via the `manpath` command
+unset MANPATH # delete if you already modified MANPATH elsewhere in your config
+export MANPATH="$NPM_PACKAGES/share/man:$(manpath)"
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+alias vim='nvim'
+alias vimdiff='nvim -d'
+export PATH=$HOME/local/bin:$PATH
+export PATH=$HOME/bin:$PATH
+
+{
+  # Compile zcompdump, if modified, to increase startup speed.
+  zcompdump="${ZDOTDIR:-$HOME}/.zcompdump"
+  if [[ -s "$zcompdump" && (! -s "${zcompdump}.zwc" || "$zcompdump" -nt "${zcompdump}.zwc") ]]; then
+    zcompile "$zcompdump"
+  fi
+} &!
+
+alias o='xdg-open'
+
+source $HOME/.cargo/env
+
+
+. $HOME/.asdf/asdf.sh
+
+# append completions to fpath
+fpath=(${ASDF_DIR}/completions $fpath)
+# initialise completions with ZSH's compinit
+autoload -Uz compinit && compinit
+
+# pnpm
+export PNPM_HOME="/home/brunolca/.local/share/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+# pnpm end
+
+# Added by Amplify CLI binary installer
+export PATH="$HOME/.amplify/bin:$PATH"
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
