@@ -211,6 +211,8 @@ require('lazy').setup({
     end,
   },
 
+  { 'smartpde/telescope-recent-files', },
+
   -- Fuzzy Finder (files, lsp, etc)
   {
     'nvim-telescope/telescope.nvim',
@@ -315,7 +317,10 @@ require('telescope').setup {
     mappings = {
       i = {
         ['<C-u>'] = false,
-        ['<C-d>'] = false
+        ['<C-d>'] = false,
+        ["<c-a>"] = function() vim.cmd ":norm I" end,
+        ["<c-e>"] = function() vim.cmd ":norm A" end,
+        ["<c-u>"] = function() vim.cmd ":norm c0" end,
       },
     },
   },
@@ -325,7 +330,7 @@ require('telescope').setup {
       show_current_file = false,
       ignore_patterns = { "*.git/*", "*/tmp/*", "*/node_modules/*" },
     }
-  },
+  }
 }
 
 -- Enable telescope fzf native, if installed
@@ -345,8 +350,12 @@ local function custom_telescope(method)
   end
 end
 
-vim.keymap.set('n', '<c-e>', custom_telescope(require('telescope').extensions.frecency.frecency),
-  { desc = 'Find project file sort by freCency' })
+vim.keymap.set(
+  'n',
+  '<c-p>',
+  custom_telescope(require('telescope').extensions.recent_files.pick),
+  { desc = 'Find project file sort by recency' }
+)
 
 -- See `:help telescope.builtin`
 vim.keymap.set('n', '<leader>?', custom_telescope(require('telescope.builtin').oldfiles),
@@ -590,6 +599,26 @@ cmp.event:on(
   'confirm_done',
   cmp_autopairs.on_confirm_done()
 )
+
+vim.api.nvim_create_autocmd('BufRead', {
+  callback = function(opts)
+    vim.api.nvim_create_autocmd('BufWinEnter', {
+      once = true,
+      buffer = opts.buf,
+      callback = function()
+        local ft = vim.bo[opts.buf].filetype
+        local last_known_line = vim.api.nvim_buf_get_mark(opts.buf, '"')[1]
+        if
+            not (ft:match('commit') and ft:match('rebase'))
+            and last_known_line > 1
+            and last_known_line <= vim.api.nvim_buf_line_count(opts.buf)
+        then
+          vim.api.nvim_feedkeys([[g`"]], 'nx', false)
+        end
+      end,
+    })
+  end,
+})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
