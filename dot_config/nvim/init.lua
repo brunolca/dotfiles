@@ -81,12 +81,6 @@ require('lazy').setup({
     'ggandor/lightspeed.nvim',
     dependencies = { 'tpope/vim-repeat' },
   },
-
-  {
-    "nvim-telescope/telescope-frecency.nvim",
-    dependencies = { "kkharji/sqlite.lua" }
-  },
-
   {
     'lewis6991/gitsigns.nvim',
     config = function()
@@ -222,8 +216,6 @@ require('lazy').setup({
     'nvim-telescope/telescope.nvim',
     dependencies = {
       'nvim-lua/plenary.nvim',
-      "debugloop/telescope-undo.nvim",
-      -- Fuzzy Finder Algorithm which requires local dependencies to be built.
       -- Only load if `make` is available. Make sure you have the system
       -- requirements installed.
       {
@@ -328,12 +320,10 @@ require('telescope').setup {
     },
   },
   extensions = {
-    frecency = {
-      show_scores = false,
-      show_unindexed = true,
-      default_workspace = 'CWD',
+    recent_files = {
+      only_cwd = true,
+      show_current_file = false,
       ignore_patterns = { "*.git/*", "*/tmp/*", "*/node_modules/*" },
-      disable_devicons = false,
     }
   },
 }
@@ -341,8 +331,8 @@ require('telescope').setup {
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
 
--- Enable telescope frecency
-pcall(require('telescope').load_extension, 'frecency')
+-- Enable telescope recent files
+pcall(require('telescope').load_extension, 'recent_files')
 
 
 
