@@ -1,5 +1,13 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+
+
+vim.keymap.set('n', 'y', '"+y')
+vim.keymap.set('n', 'yy', '"+yy')
+vim.keymap.set('n', 'Y', '"+Y')
+vim.keymap.set('x', 'y', '"+y')
+vim.keymap.set('x', 'Y', '"+Y')
+
 vim.keymap.set('n', '<', '[', { remap = true })
 vim.keymap.set('n', '>', ']', { remap = true })
 vim.keymap.set('o', '<', '[', { remap = true })
@@ -30,8 +38,10 @@ require('lazy').setup({
   'tpope/vim-rhubarb',
 
   -- Detect tabstop and shiftwidth automatically
-  'tpope/vim-sleuth',
-
+  {
+    'nmac427/guess-indent.nvim',
+    config = function() require('guess-indent').setup {} end,
+  },
 
   -- Run prettier on file save
   {
@@ -73,6 +83,41 @@ require('lazy').setup({
     config = function()
       require("nvim-surround").setup({
         -- Configuration here, or leave empty to use defaults
+      })
+    end
+  },
+
+  {
+    'ray-x/navigator.lua',
+    dependencies = {
+      { 'ray-x/guihua.lua',     run = 'cd lua/fzy && make' },
+      { 'neovim/nvim-lspconfig' },
+    },
+    config = function() require("navigator").setup({}) end,
+  },
+
+  {
+    "ray-x/go.nvim",
+    dependencies = { -- optional packages
+      "ray-x/guihua.lua",
+      "neovim/nvim-lspconfig",
+      "nvim-treesitter/nvim-treesitter",
+    },
+    config = function()
+      require("go").setup()
+    end,
+    event = { "CmdlineEnter" },
+    ft = { "go", 'gomod' },
+    build = ':lua require("go.install").update_all_sync()' -- if you need to install/update all binaries
+  },
+
+  {
+    "aserowy/tmux.nvim",
+    config = function()
+      return require("tmux").setup({
+        copy_sync = {
+          redirect_to_keyboard = true
+        }
       })
     end
   },
@@ -174,7 +219,7 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim',  opts = {} },
+  { 'folke/which-key.nvim',            opts = {} },
 
   {
     "ellisonleao/gruvbox.nvim",
@@ -200,16 +245,7 @@ require('lazy').setup({
   },
 
   -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
-
-  {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "InsertEnter",
-    config = function()
-      require("copilot").setup({})
-    end,
-  },
+  { 'numToStr/Comment.nvim',           opts = {} },
 
   { 'smartpde/telescope-recent-files', },
 
@@ -237,6 +273,7 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     dependencies = {
       'nvim-treesitter/nvim-treesitter-textobjects',
+      'nvim-treesitter/nvim-treesitter-refactor',
       'windwp/nvim-ts-autotag'
     },
     build = ':TSUpdate',
@@ -255,13 +292,6 @@ vim.o.hlsearch = false
 vim.wo.number = true
 vim.wo.relativenumber = true
 
--- Enable mouse mode
-vim.o.mouse = 'a'
-
--- Sync clipboard between OS and Neovim.
---  Remove this option if you want your OS clipboard to remain independent.
---  See `:help 'clipboard'`
-vim.o.clipboard = 'unnamedplus'
 
 -- Enable break indent
 vim.o.breakindent = true
@@ -312,6 +342,9 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 -- [[ Configure Telescope ]]
 -- See `:help telescope` and `:help telescope.setup()`
+local actions = require('telescope.actions')
+local action_state = require('telescope.actions.state')
+
 require('telescope').setup {
   defaults = {
     mappings = {
@@ -321,6 +354,14 @@ require('telescope').setup {
         ["<c-a>"] = function() vim.cmd ":norm I" end,
         ["<c-e>"] = function() vim.cmd ":norm A" end,
         ["<c-u>"] = function() vim.cmd ":norm c0" end,
+        ['<c-p>'] = function(prompt_bufnr)
+          local prompt_title = action_state.get_current_picker(prompt_bufnr).prompt_title
+          if prompt_title == 'Recent files' then
+            actions.move_selection_next(prompt_bufnr)
+          else
+            actions.move_selection_previous(prompt_bufnr)
+          end
+        end
       },
     },
   },
@@ -329,6 +370,11 @@ require('telescope').setup {
       only_cwd = true,
       show_current_file = false,
       ignore_patterns = { "*.git/*", "*/tmp/*", "*/node_modules/*" },
+      mappings = {
+        i = {
+          ['<c-b>'] = actions.select_default
+        }
+      }
     }
   }
 }
@@ -350,12 +396,8 @@ local function custom_telescope(method)
   end
 end
 
-vim.keymap.set(
-  'n',
-  '<c-p>',
-  custom_telescope(require('telescope').extensions.recent_files.pick),
-  { desc = 'Find project file sort by recency' }
-)
+vim.keymap.set('n', '<c-p>', custom_telescope(require('telescope').extensions.recent_files.pick),
+  { desc = 'Find project file sort by recency' })
 
 -- See `:help telescope.builtin`
 vim.keymap.set('n', '<leader>?', custom_telescope(require('telescope.builtin').oldfiles),
@@ -512,6 +554,7 @@ local servers = {
   -- rust_analyzer = {},
   emmet_language_server = {},
   tsserver = {},
+  elixirls = {},
   html = {},
   lua_ls = {
     Lua = {
@@ -523,6 +566,7 @@ local servers = {
 
 -- Setup neovim lua configuration
 require('neodev').setup()
+
 
 -- nvim-cmp supports additional completion capabilities, so broadcast that to servers
 local capabilities = vim.lsp.protocol.make_client_capabilities()
