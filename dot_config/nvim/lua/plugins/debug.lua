@@ -61,11 +61,13 @@ return {
 
     -- Dap UI setup
     -- For more information, see |:help nvim-dap-ui|
+    ---@diagnostic disable-next-line: missing-fields
     dapui.setup {
       -- Set icons to characters that are more likely to work in every terminal.
       --    Feel free to remove or use ones that you like more! :)
       --    Don't feel like these are good choices.
       icons = { expanded = '▾', collapsed = '▸', current_frame = '*' },
+      ---@diagnostic disable-next-line: missing-fields
       controls = {
         icons = {
           pause = '⏸',
@@ -92,6 +94,7 @@ return {
     require('dap-go').setup()
 
 
+    ---@diagnostic disable-next-line: missing-fields
     require("dap-vscode-js").setup({
       -- node_path = "node", -- Path of node executable. Defaults to $NODE_PATH, and then "node"
       debugger_path = vim.fn.stdpath('data') .. "/lazy/vscode-js-debug",                           -- Path to vscode-js-debug installation.
@@ -103,6 +106,7 @@ return {
     })
     for _, language in ipairs({ "typescript", "javascript", "typescriptreact" }) do
       require("dap").configurations[language] = {
+        ---@diagnostic disable-next-line: missing-fields
         {
           {
             type = "pwa-node",

@@ -72,4 +72,8 @@ export GOPATH="$HOME/go"
 export GOBIN="$GOPATH/bin"
 export PATH="$GOBIN:$PATH"
 export ERL_AFLAGS="-kernel shell_history enabled"
+export PATH="/home/brunolca/.mix/escripts:$PATH"
+
+
+export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock
 

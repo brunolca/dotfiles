@@ -1,6 +1,8 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
 
 vim.keymap.set('n', 'y', '"+y')
 vim.keymap.set('n', 'yy', '"+yy')
@@ -81,35 +83,84 @@ require('lazy').setup({
     version = "*", -- Use for stability; omit to use `main` branch for the latest features
     event = "VeryLazy",
     config = function()
-      require("nvim-surround").setup({
-        -- Configuration here, or leave empty to use defaults
-      })
+      require("nvim-surround").setup()
     end
   },
 
   {
-    'ray-x/navigator.lua',
+    "nvim-neo-tree/neo-tree.nvim",
+    branch = "v3.x",
     dependencies = {
-      { 'ray-x/guihua.lua',     run = 'cd lua/fzy && make' },
-      { 'neovim/nvim-lspconfig' },
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      -- "2rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
     },
-    config = function() require("navigator").setup({}) end,
   },
 
   {
-    "ray-x/go.nvim",
-    dependencies = { -- optional packages
-      "ray-x/guihua.lua",
-      "neovim/nvim-lspconfig",
-      "nvim-treesitter/nvim-treesitter",
-    },
+    "catppuccin/nvim",
+    name = "catppuccin",
+    priority = 1000,
     config = function()
-      require("go").setup()
-    end,
-    event = { "CmdlineEnter" },
-    ft = { "go", 'gomod' },
-    build = ':lua require("go.install").update_all_sync()' -- if you need to install/update all binaries
+      vim.cmd.colorscheme "catppuccin"
+    end
   },
+
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    config = function()
+      require("copilot").setup({
+        suggestion = { enabled = false },
+        panel = { enabled = false },
+      })
+    end,
+  },
+
+  {
+    "zbirenbaum/copilot-cmp",
+    config = function()
+      require("copilot_cmp").setup()
+    end
+  },
+
+  { "hrsh7th/cmp-path" },
+
+  {
+    "folke/trouble.nvim",
+    config = function()
+      require("trouble").setup({
+        position = "right",
+        height = 18,
+        width = 80,
+        icons = false,
+        fold_open = "v",      -- icon used for open folds
+        fold_closed = ">",    -- icon used for closed folds
+        indent_lines = false, -- add an indent guide below the fold icons
+        signs = {
+          -- icons / text used for a diagnostic
+          error = "error",
+          warning = "warn",
+          hint = "hint",
+          information = "info",
+          other = "",
+        },
+        use_diagnostic_signs = false -- enabling this will use the signs defined in your lsp client
+      })
+      vim.keymap.set("n", "<leader>xx", function() require("trouble").toggle() end, { desc = "Toggle Trouble" })
+      vim.keymap.set("n", "<leader>xw", function() require("trouble").open("workspace_diagnostics") end,
+        { desc = "Trouble workspace diagnostics" })
+      vim.keymap.set("n", "<leader>xd", function() require("trouble").open("document_diagnostics") end,
+        { desc = "Trouble document diagnostics" })
+      vim.keymap.set("n", "<leader>xq", function() require("trouble").openc("quickfix") end,
+        { desc = "Trouble Quickfix" })
+      vim.keymap.set("n", "<leader>xl", function() require("trouble").open("loclist") end, { desc = "Trouble Loclist" })
+      vim.keymap.set("n", "gR", function() require("trouble").open("lsp_references") end,
+        { desc = "Trouble LSP References" })
+    end,
+  },
+
+
 
   {
     "aserowy/tmux.nvim",
@@ -130,47 +181,48 @@ require('lazy').setup({
     'lewis6991/gitsigns.nvim',
     config = function()
       require('gitsigns').setup {
-        on_attach = function(bufnr)
-          local gs = package.loaded.gitsigns
-
-          local function map(mode, l, r, opts)
-            opts = opts or {}
-            opts.buffer = bufnr
-            vim.keymap.set(mode, l, r, opts)
-          end
+        ---@diagnostic disable-next-line: unused-local
+        on_attach = function(_bufnr)
+          -- local gs = package.loaded.gitsigns
+          --
+          -- local function map(mode, l, r, opts)
+          --   opts = opts or {}
+          --   opts.buffer = bufnr
+          --   vim.keymap.set(mode, l, r, opts)
+          -- end
 
           -- Navigation
-          map('n', ']c', function()
-            if vim.wo.diff then return ']c' end
-            vim.schedule(function() gs.next_hunk() end)
-            return '<Ignore>'
-          end, { expr = true })
-
-          map('n', '[c', function()
-            if vim.wo.diff then return '[c' end
-            vim.schedule(function() gs.prev_hunk() end)
-            return '<Ignore>'
-          end, { expr = true })
+          -- map('n', ']c', function()
+          --   if vim.wo.diff then return ']c' end
+          --   vim.schedule(function() gs.next_hunk() end)
+          --   return '<Ignore>'
+          -- end, { expr = true })
+          --
+          -- map('n', '[c', function()
+          --   if vim.wo.diff then return '[c' end
+          --   vim.schedule(function() gs.prev_hunk() end)
+          --   return '<Ignore>'
+          -- end, { expr = true })
 
           -- Actions
-          map('n', '<leader>hs', gs.stage_hunk, { desc = 'stage hunk' })
-          map('n', '<leader>hr', gs.reset_hunk, { desc = 'reset hunk' })
-          map('v', '<leader>hs', function() gs.stage_hunk { vim.fn.line('.'), vim.fn.line('v') } end,
-            { desc = "stage hunk" })
-          map('v', '<leader>hr', function() gs.reset_hunk { vim.fn.line('.'), vim.fn.line('v') } end,
-            { desc = 'reset hunk' })
-          map('n', '<leader>hS', gs.stage_buffer, { desc = 'stage buffer' })
-          map('n', '<leader>hu', gs.undo_stage_hunk, { desc = 'undo stage hunk' })
-          map('n', '<leader>hR', gs.reset_buffer, { desc = 'reset buffer' })
-          map('n', '<leader>hp', gs.preview_hunk, { desc = 'preview hunk' })
-          map('n', '<leader>hb', function() gs.blame_line { full = true } end, { desc = 'blame line' })
-          map('n', '<leader>tb', gs.toggle_current_line_blame, { desc = 'toggle line blame' })
-          map('n', '<leader>hd', gs.diffthis, { desc = 'diffthis' })
-          map('n', '<leader>hD', function() gs.diffthis('~') end, { desc = 'diffthis~' })
-          map('n', '<leader>td', gs.toggle_deleted, { desc = 'toggle deleted' })
-
-          -- Text object
-          map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>')
+          -- map('n', '<leader>hs', gs.stage_hunk, { desc = 'stage hunk' })
+          -- map('n', '<leader>hr', gs.reset_hunk, { desc = 'reset hunk' })
+          -- map('v', '<leader>hs', function() gs.stage_hunk { vim.fn.line('.'), vim.fn.line('v') } end,
+          --   { desc = "stage hunk" })
+          -- map('v', '<leader>hr', function() gs.reset_hunk { vim.fn.line('.'), vim.fn.line('v') } end,
+          --   { desc = 'reset hunk' })
+          -- map('n', '<leader>hS', gs.stage_buffer, { desc = 'stage buffer' })
+          -- map('n', '<leader>hu', gs.undo_stage_hunk, { desc = 'undo stage hunk' })
+          -- map('n', '<leader>hR', gs.reset_buffer, { desc = 'reset buffer' })
+          -- map('n', '<leader>hp', gs.preview_hunk, { desc = 'preview hunk' })
+          -- map('n', '<leader>hb', function() gs.blame_line { full = true } end, { desc = 'blame line' })
+          -- map('n', '<leader>tb', gs.toggle_current_line_blame, { desc = 'toggle line blame' })
+          -- map('n', '<leader>hd', gs.diffthis, { desc = 'diffthis' })
+          -- map('n', '<leader>hD', function() gs.diffthis('~') end, { desc = 'diffthis~' })
+          -- map('n', '<leader>td', gs.toggle_deleted, { desc = 'toggle deleted' })
+          --
+          -- -- Text object
+          -- map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>')
         end
       }
     end
@@ -181,6 +233,73 @@ require('lazy').setup({
   {
     -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
+    config = function()
+      --  Switch for controlling whether you want autoformatting.
+      --  Use :KickstartFormatToggle to toggle autoformatting on or off
+      local format_is_enabled = true
+      vim.api.nvim_create_user_command('KickstartFormatToggle', function()
+        format_is_enabled = not format_is_enabled
+        print('Setting autoformatting to: ' .. tostring(format_is_enabled))
+      end, {})
+
+      -- Create an augroup that is used for managing our formatting autocmds.
+      --      We need one augroup per client to make sure that multiple clients
+      --      can attach to the same buffer without interfering with each other.
+      local _augroups = {}
+      local get_augroup = function(client)
+        if not _augroups[client.id] then
+          local group_name = 'kickstart-lsp-format-' .. client.name
+          local id = vim.api.nvim_create_augroup(group_name, { clear = true })
+          _augroups[client.id] = id
+        end
+
+        return _augroups[client.id]
+      end
+
+      -- Whenever an LSP attaches to a buffer, we will run this function.
+      --
+      -- See `:help LspAttach` for more information about this autocmd event.
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('kickstart-lsp-attach-format', { clear = true }),
+        -- This is where we attach the autoformatting for reasonable clients
+        callback = function(args)
+          local client_id = args.data.client_id
+          local client = vim.lsp.get_client_by_id(client_id)
+          local bufnr = args.buf
+
+          -- Only attach to clients that support document formatting
+          if not client.server_capabilities.documentFormattingProvider then
+            return
+          end
+
+          -- Tsserver usually works poorly. Sorry you work with bad languages
+          -- You can remove this line if you know what you're doing :)
+          if client.name == 'tsserver' then
+            return
+          end
+
+
+          -- Create an autocmd that will run *before* we save the buffer.
+          --  Run the formatting command for the LSP that has just attached.
+          vim.api.nvim_create_autocmd('BufWritePre', {
+            group = get_augroup(client),
+            buffer = bufnr,
+            callback = function()
+              if not format_is_enabled then
+                return
+              end
+
+              vim.lsp.buf.format {
+                async = false,
+                filter = function(c)
+                  return c.id == client.id
+                end,
+              }
+            end,
+          })
+        end,
+      })
+    end,
     dependencies = {
       -- Automatically install LSPs to stdpath for neovim
       { 'williamboman/mason.nvim', config = true },
@@ -188,7 +307,7 @@ require('lazy').setup({
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim',       tag = 'legacy', opts = {} },
+      { 'j-hui/fidget.nvim',       opts = {} },
 
       -- Additional lua configuration, makes nvim stuff amazing!
       'folke/neodev.nvim',
@@ -219,16 +338,8 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim',            opts = {} },
+  { 'folke/which-key.nvim', opts = {} },
 
-  {
-    "ellisonleao/gruvbox.nvim",
-    priority = 1000,
-    config = function()
-      vim.o.background = "dark"
-      vim.cmd.colorscheme 'gruvbox'
-    end,
-  },
 
   {
     -- Set lualine as statusline
@@ -317,6 +428,11 @@ vim.o.completeopt = 'menuone,noselect'
 vim.o.termguicolors = true
 vim.o.scrolloff = 12
 vim.o.scrollback = 20
+
+vim.o.foldmethod = 'expr'
+vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.o.foldlevelstart = 99
+
 -- [[ Basic Keymaps ]]
 
 -- Keymaps for better default experience
@@ -339,7 +455,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 })
 
 
-
 -- [[ Configure Telescope ]]
 -- See `:help telescope` and `:help telescope.setup()`
 local actions = require('telescope.actions')
@@ -347,6 +462,7 @@ local action_state = require('telescope.actions.state')
 
 require('telescope').setup {
   defaults = {
+    file_ignore_patterns = { "*.git/*", "tmp", "node_modules", "deps", "_build" },
     mappings = {
       i = {
         ['<C-u>'] = false,
@@ -419,9 +535,10 @@ vim.keymap.set('n', '<leader>sc', custom_telescope(require('telescope.builtin').
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
+---@diagnostic disable-next-line: missing-fields
 require('nvim-treesitter.configs').setup {
   -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'typescript', 'vimdoc', 'vim' },
+  ensure_installed = { 'c', 'cpp', 'lua', 'python', 'rust', 'tsx', 'typescript', 'vimdoc', 'vim' },
 
   -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
   auto_install = true,
@@ -492,8 +609,6 @@ require('nvim-treesitter.configs').setup {
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
-vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
 
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
@@ -516,22 +631,11 @@ local on_attach = function(_, bufnr)
   nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
 
   nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
-  nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
   nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
   nmap('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
-  nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-  nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
   -- See `:help K` for why this keymap
   nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-
-  -- Lesser used LSP functionality
-  nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-  nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
-  nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
-  nmap('<leader>wl', function()
-    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-  end, '[W]orkspace [L]ist Folders')
 
   -- Create a command `:Format` local to the LSP buffer
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
@@ -552,9 +656,12 @@ local servers = {
   -- gopls = {},
   -- pyright = {},
   -- rust_analyzer = {},
+  tailwindcss = {},
   emmet_language_server = {},
   tsserver = {},
-  elixirls = {},
+  elixirls = {
+    dialyzerEnabled = true
+  },
   html = {},
   lua_ls = {
     Lua = {
@@ -597,6 +704,7 @@ local luasnip = require 'luasnip'
 require('luasnip.loaders.from_vscode').lazy_load()
 luasnip.config.setup {}
 
+---@diagnostic disable-next-line: missing-fields
 cmp.setup {
   snippet = {
     expand = function(args)
@@ -633,8 +741,10 @@ cmp.setup {
     end, { 'i', 's' }),
   },
   sources = {
-    { name = 'nvim_lsp' },
-    { name = 'luasnip' },
+    { name = 'copilot',  group_index = 2 },
+    { name = 'nvim_lsp', group_index = 2 },
+    { name = 'luasnip',  group_index = 2 },
+    { name = "path",     group_index = 2 },
   },
 }
 
@@ -663,6 +773,31 @@ vim.api.nvim_create_autocmd('BufRead', {
     })
   end,
 })
+
+-- this is for diagnositcs signs on the line number column
+-- use this to beautify the plain E W signs to more fun ones
+-- !important nerdfonts needs to be setup for this to work in your terminal
+local signs = { Error = "x", Warn = "!", Hint = "§", Info = "i" }
+for type, icon in pairs(signs) do
+  local hl = "DiagnosticSign" .. type
+  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+end
+
+vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+  vim.lsp.diagnostic.on_publish_diagnostics, {
+    virtual_text = false
+  }
+)
+
+vim.api.nvim_set_keymap(
+  'n', '<Leader>d', ':lua vim.diagnostic.open_float()<CR>',
+  { desc = 'Show Diagnostic under cursor', noremap = true, silent = true }
+)
+
+vim.api.nvim_set_keymap(
+  'n', '<Leader>e', '<cmd>Neotree toggle<cr>',
+  { desc = 'Toggle Tree File Finder', noremap = true, silent = true }
+)
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
