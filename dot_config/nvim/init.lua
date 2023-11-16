@@ -167,7 +167,13 @@ require('lazy').setup({
     config = function()
       return require("tmux").setup({
         copy_sync = {
-          redirect_to_keyboard = true
+          redirect_to_clipboard = true,
+        },
+        resize = {
+          -- enables default keybindings (A-hjkl) for normal mode
+          enable_default_keybindings = true,
+          resize_step_x = 5,
+          resize_step_y = 5,
         }
       })
     end
@@ -340,6 +346,13 @@ require('lazy').setup({
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim', opts = {} },
 
+  {
+    'HiPhish/rainbow-delimiters.nvim',
+    config = function()
+      require('rainbow-delimiters.setup').setup {
+      }
+    end
+  },
 
   {
     -- Set lualine as statusline
@@ -432,6 +445,9 @@ vim.o.scrollback = 20
 vim.o.foldmethod = 'expr'
 vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
 vim.o.foldlevelstart = 99
+
+
+vim.o.wrap = false
 
 -- [[ Basic Keymaps ]]
 
@@ -667,6 +683,13 @@ local servers = {
     Lua = {
       workspace = { checkThirdParty = false },
       telemetry = { enable = false },
+    },
+  },
+  gopls = {
+    settings = {
+      gopls = {
+        staticcheck = true,
+      },
     },
   },
 }
